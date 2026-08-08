@@ -58,6 +58,22 @@ export async function fetchDailySignals(symbol: string): Promise<{ symbol: strin
   return res.json();
 }
 
+// Consolidated signal status
+export interface SignalStatus {
+  symbol: string;
+  status: 'BUY' | 'SELL';
+  price: number;
+  signals: Record<string, { signal_type: string; datetime: string } | null>;
+  buyPoint?: number;
+  supportType?: string;
+  supportLevels?: { label: string; price: number }[];
+}
+
+export async function fetchSignalStatus(symbol: string): Promise<SignalStatus> {
+  const res = await fetch(`${API_BASE}/signal-status/${symbol}`);
+  return res.json();
+}
+
 // Signals summary types
 export interface SignalData {
   signal_type: string;

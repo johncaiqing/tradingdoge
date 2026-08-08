@@ -119,6 +119,118 @@
   z-index: 10;
 }
 
+/* 信号徽章 - 图表右侧 */
+.signal-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 10;
+  min-width: 130px;
+  backdrop-filter: blur(8px);
+}
+
+.signal-badge-buy {
+  background: rgba(0, 255, 136, 0.12);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+}
+
+.signal-badge-sell {
+  background: rgba(255, 68, 68, 0.12);
+  border: 1px solid rgba(255, 68, 68, 0.35);
+}
+
+.signal-badge-label {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.signal-badge-buy .signal-badge-label {
+  color: #00ff88;
+}
+
+.signal-badge-sell .signal-badge-label {
+  color: #ff4444;
+}
+
+.signal-badge-price {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.signal-badge-buy-point {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #00ff88;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.signal-badge-support {
+  font-size: 0.625rem;
+  color: rgba(0, 255, 136, 0.6);
+  margin-bottom: 10px;
+}
+
+.signal-badge-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.signal-level-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.signal-level-label {
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+}
+
+.signal-level-price {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-secondary);
+}
+
+.signal-badge-details {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.signal-dot {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.dot-b {
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.15);
+}
+
+.dot-s {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.15);
+}
+
 .chart-wrapper {
   height: 420px;
   width: 100%;

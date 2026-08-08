@@ -79,6 +79,104 @@ router.get('/signals-daily/:symbol', async (req: Request, res: Response) => {
   res.json({ symbol, days, data: result });
 });
 
+// Find swing lows from daily data (price action support levels)
+function findSwingLows(data: { low: number }[], lookback: number = 2): number[] {
+  const swings: number[] = [];
+  for (let i = lookback; i < data.length - lookback; i++) {
+    let isSwingLow = true;
+    for (let j = 1; j <= lookback; j++) {
+      if (data[i].low >= data[i - j].low || data[i].low >= data[i + j].low) {
+        isSwingLow = false;
+        break;
+      }
+    }
+    if (isSwingLow) swings.push(data[i].low);
+  }
+  return swings;
+}
+
+// Calculate buy point based on price action
+function calcBuyPoint(dailyData: { open: number; high: number; low: number; close: number }[]): {
+  buyPoint: number;
+  supportType: string;
+  supportLevels: { label: string; price: number }[];
+} {
+  // MA25 as dynamic trend support
+  const closes = dailyData.map(d => d.close);
+  let ma25Sum = 0;
+  const ma25Len = Math.min(25, closes.length);
+  for (let i = closes.length - ma25Len; i < closes.length; i++) {
+    ma25Sum += closes[i];
+  }
+  const ma25 = ma25Sum / ma25Len;
+
+  // Find recent swing lows
+  const swingLows = findSwingLows(dailyData, 2);
+  const recentSwingLow = swingLows.length > 0 ? swingLows[swingLows.length - 1] : null;
+
+  // Previous day low
+  const prevDay = dailyData[dailyData.length - 2];
+  const prevLow = prevDay ? prevDay.low : dailyData[dailyData.length - 1].low;
+
+  // Price action buy point: use MA25 as primary entry (dynamic support in uptrend)
+  // If there's a recent swing low above MA25, use that as stronger support
+  const supportLevels: { label: string; price: number }[] = [
+    { label: 'MA25 动态支撑', price: Math.round(ma25 * 100) / 100 }
+  ];
+  if (recentSwingLow !== null) {
+    supportLevels.push({ label: '近期摆动低点', price: Math.round(recentSwingLow * 100) / 100 });
+  }
+  supportLevels.push({ label: '前日低点', price: Math.round(prevLow * 100) / 100 });
+
+  // Buy point = highest support level (closest to current price, safest entry)
+  const highestSupport = Math.max(
+    ma25,
+    recentSwingLow ?? 0,
+    prevLow
+  );
+
+  return {
+    buyPoint: Math.round(highestSupport * 100) / 100,
+    supportType: highestSupport === ma25 ? 'MA25 动态支撑' : highestSupport === recentSwingLow ? '近期摆动低点' : '前日低点',
+    supportLevels
+  };
+}
+
+// Get consolidated signal status (all B = BUY with buy point, else SELL)
+router.get('/signal-status/:symbol', async (req: Request, res: Response) => {
+  let symbol = decodeURIComponent(req.params.symbol);
+  symbol = symbol.replace('BTC-USD', 'BTC/USD');
+
+  if (!SYMBOLS.includes(symbol as any)) {
+    return res.status(400).json({ error: 'Invalid symbol' });
+  }
+
+  const intervals = ['1h', '2h', '4h', '1day'];
+  const signals: Record<string, { signal_type: string; datetime: string } | null> = {};
+
+  for (const interval of intervals) {
+    const sigs = await getSignals(symbol, 3);
+    const filtered = sigs.filter(s => s.interval === interval);
+    signals[interval] = filtered.length > 0
+      ? { signal_type: filtered[0].signal_type, datetime: filtered[0].datetime }
+      : null;
+  }
+
+  const signalValues = Object.values(signals).filter(s => s !== null);
+  const allB = signalValues.length === 4 && signalValues.every(s => s!.signal_type === 'B');
+  const status = allB ? 'BUY' : 'SELL';
+
+  const dailyData = await getStockData(symbol, '1day', 60);
+  const price = dailyData.length > 0 ? dailyData[dailyData.length - 1].close : 0;
+
+  if (status === 'BUY') {
+    const { buyPoint, supportType, supportLevels } = calcBuyPoint(dailyData);
+    res.json({ symbol, status, price, signals, buyPoint, supportType, supportLevels });
+  } else {
+    res.json({ symbol, status, price, signals });
+  }
+});
+
 // Get B/S signals
 router.get('/signals/:symbol', async (req: Request, res: Response) => {
   let symbol = decodeURIComponent(req.params.symbol);
