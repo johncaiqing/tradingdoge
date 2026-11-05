@@ -119,17 +119,13 @@
   z-index: 10;
 }
 
-/* 信号徽章 - 图表右侧 */
+/* 信号徽章 - 侧边栏 */
 .signal-badge {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  padding: 16px 20px;
-  border-radius: 10px;
+  padding: 24px 20px;
+  border-radius: 12px;
   text-align: center;
-  z-index: 10;
   min-width: 130px;
-  backdrop-filter: blur(8px);
+  margin-bottom: 16px;
 }
 
 .signal-badge-buy {

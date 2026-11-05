@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchStockData, fetchDailySignals, fetchSignalStatus, OHLCV, Interval, INTERVALS, DailySignal, SignalStatus } from '../api';
 import StockChart from '../components/Chart';
-import { CommentSection } from '../components/CommentSection';
 import './StockDetail.css';
 
 export const StockDetail: React.FC = () => {
@@ -82,44 +81,6 @@ export const StockDetail: React.FC = () => {
               <StockChart data={chartData} ma25={ma25Data} ma90={ma90Data} />
             )}
             <div className="chart-watermark">Tradingdoge.com</div>
-            {signalStatus && (
-              <div className={`signal-badge ${signalStatus.status === 'BUY' ? 'signal-badge-buy' : 'signal-badge-sell'}`}>
-                <div className="signal-badge-label">
-                  {signalStatus.status === 'BUY' ? '买点' : '卖出'}
-                </div>
-                {signalStatus.status === 'BUY' && signalStatus.buyPoint != null ? (
-                  <>
-                    <div className="signal-badge-buy-point">
-                      ${signalStatus.buyPoint.toFixed(2)}
-                    </div>
-                    <div className="signal-badge-support">
-                      {signalStatus.supportType}
-                    </div>
-                    {signalStatus.supportLevels && (
-                      <div className="signal-badge-levels">
-                        {signalStatus.supportLevels.map(l => (
-                          <div key={l.label} className="signal-level-row">
-                            <span className="signal-level-label">{l.label}</span>
-                            <span className="signal-level-price">${l.price.toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="signal-badge-price">
-                    当前 ${signalStatus.price.toFixed(2)}
-                  </div>
-                )}
-                <div className="signal-badge-details">
-                  {['1h', '2h', '4h', '1day'].map(tf => (
-                    <span key={tf} className={`signal-dot ${signalStatus.signals[tf]?.signal_type === 'B' ? 'dot-b' : 'dot-s'}`}>
-                      {tf} {signalStatus.signals[tf]?.signal_type || '-'}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="signals-section">
@@ -150,7 +111,44 @@ export const StockDetail: React.FC = () => {
         </div>
 
         <div className="detail-sidebar">
-          <CommentSection symbol={symbol!} />
+          {signalStatus && (
+            <div className={`signal-badge ${signalStatus.status === 'BUY' ? 'signal-badge-buy' : 'signal-badge-sell'}`}>
+              <div className="signal-badge-label">
+                {signalStatus.status === 'BUY' ? '买点' : '卖出'}
+              </div>
+              {signalStatus.status === 'BUY' && signalStatus.buyPoint != null ? (
+                <>
+                  <div className="signal-badge-buy-point">
+                    ${signalStatus.buyPoint.toFixed(2)}
+                  </div>
+                  <div className="signal-badge-support">
+                    {signalStatus.supportType}
+                  </div>
+                  {signalStatus.supportLevels && (
+                    <div className="signal-badge-levels">
+                      {signalStatus.supportLevels.map(l => (
+                        <div key={l.label} className="signal-level-row">
+                          <span className="signal-level-label">{l.label}</span>
+                          <span className="signal-level-price">${l.price.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="signal-badge-price">
+                  当前 ${signalStatus.price.toFixed(2)}
+                </div>
+              )}
+              <div className="signal-badge-details">
+                {['1h', '2h', '4h', '1day'].map(tf => (
+                  <span key={tf} className={`signal-dot ${signalStatus.signals[tf]?.signal_type === 'B' ? 'dot-b' : 'dot-s'}`}>
+                    {tf} {signalStatus.signals[tf]?.signal_type || '-'}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
