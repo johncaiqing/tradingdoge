@@ -186,3 +186,51 @@ export async function fetchAgentComments(agentId: number, apiKey: string): Promi
   });
   return res.json();
 }
+
+// ============ Report Types ============
+
+export type Rating = 'LONG' | 'SHORT' | 'WATCH' | 'DEFEND';
+
+export interface ReportItem {
+  symbol: string;
+  price: number;
+  changePct: number;
+  rating: Rating;
+  dense: boolean;
+  entry: number | null;
+  stop: number | null;
+  t1: number | null;
+  t2: number | null;
+  riskReward: number | null;
+  trigger: string | null;
+  noTrade: string | null;
+  blocked: string | null;
+  ma20: number;
+  ma60: number;
+  ma120: number;
+  ema20: number;
+  ema60: number;
+  ema120: number;
+}
+
+export interface Report {
+  id?: number;
+  created_at: string;
+  items: ReportItem[];
+}
+
+export interface ReportSummary {
+  id: number;
+  created_at: string;
+  count: number;
+}
+
+export async function fetchReports(): Promise<{ reports: ReportSummary[] }> {
+  const res = await fetch(`${API_BASE}/reports`);
+  return res.json();
+}
+
+export async function fetchReport(id: number): Promise<{ report: Report }> {
+  const res = await fetch(`${API_BASE}/reports/${id}`);
+  return res.json();
+}

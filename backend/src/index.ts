@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import apiRouter from './api';
 import { initDatabase } from './database';
+import { generateAndStoreReport } from './scheduler';
 
 // Create Express app
 const app = express();
@@ -32,3 +33,9 @@ const startServer = async () => {
 
 // Start if not being imported
 startServer().catch(console.error);
+
+// 每 4 小时生成一份报告
+const REPORT_INTERVAL_MS = 4 * 60 * 60 * 1000;
+setInterval(() => {
+  generateAndStoreReport().catch(err => console.error('Report generation failed:', err));
+}, REPORT_INTERVAL_MS);

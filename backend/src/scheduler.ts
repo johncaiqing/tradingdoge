@@ -1,7 +1,8 @@
 import { SYMBOLS, INTERVALS, Interval } from './types';
-import { upsertStockData, getLatestDatetime, getStockData } from './database';
+import { upsertStockData, getLatestDatetime, getStockData, insertReport } from './database';
 import { fetchTimeSeries } from './twelvedata';
 import { processStockData } from './signals';
+import { generateReport } from './report';
 
 // 校验数据完整性
 export async function validateAndFetchIncomplete() {
@@ -43,6 +44,25 @@ export async function validateAndFetchIncomplete() {
   }
 
   return results;
+}
+
+// 拉取最新 4h 数据并生成/落库一份报告
+export async function generateAndStoreReport(): Promise<number> {
+  console.log('Generating report...');
+
+  for (const symbol of SYMBOLS) {
+    const latest = await getLatestDatetime(symbol as string, '4h');
+    const data = await fetchTimeSeries(symbol as any, '4h', 400, latest || undefined);
+    if (data.length > 0) {
+      await upsertStockData(symbol as any, '4h', data);
+    }
+    await new Promise(resolve => setTimeout(resolve, 8000));
+  }
+
+  const report = await generateReport();
+  const id = await insertReport(report);
+  console.log(`Report #${id} stored with ${report.items.length} items`);
+  return id;
 }
 
 // 手动触发数据更新

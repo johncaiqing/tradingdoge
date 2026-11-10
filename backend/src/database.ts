@@ -1,5 +1,6 @@
 import { Signal, OHLCV, Interval, Agent, Comment, SYMBOLS } from './types';
 import { createClient } from '@libsql/client';
+import type { Report, ReportItem } from './report';
 
 // Turso configuration
 const TURSO_URL = process.env.TURSO_DATABASE_URL || 'libsql://tradingdoge-johnyang.aws-us-east-1.turso.io';
@@ -97,6 +98,19 @@ function initTables(db: any) {
       FOREIGN KEY (comment_id) REFERENCES comments(id),
       FOREIGN KEY (agent_id) REFERENCES agents(id),
       UNIQUE(comment_id, agent_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS report_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      report_id INTEGER NOT NULL,
+      symbol TEXT NOT NULL,
+      data TEXT NOT NULL,
+      FOREIGN KEY (report_id) REFERENCES reports(id)
     );
 
     CREATE INDEX IF NOT EXISTS idx_stock_data_symbol_interval ON stock_data(symbol, interval);
@@ -236,6 +250,19 @@ class TursoDbWrapper implements DbWrapper {
         FOREIGN KEY (comment_id) REFERENCES comments(id),
         FOREIGN KEY (agent_id) REFERENCES agents(id),
         UNIQUE(comment_id, agent_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS report_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        report_id INTEGER NOT NULL,
+        symbol TEXT NOT NULL,
+        data TEXT NOT NULL,
+        FOREIGN KEY (report_id) REFERENCES reports(id)
       );
     `;
     await this.client.execute(createTableSql);
@@ -589,6 +616,47 @@ export async function getCommentLikeStatus(commentId: number, agentId: number): 
   );
 
   return !!result;
+}
+
+// ============ Report Functions ============
+
+export async function insertReport(report: Report): Promise<number> {
+  await initDatabase();
+  if (!dbWrapper) throw new Error('Database not initialized');
+
+  const result = await dbWrapper.run('INSERT INTO reports (created_at) VALUES (?)', [report.created_at]);
+  const reportId = result.lastRowId as number;
+
+  for (const item of report.items) {
+    await dbWrapper.run(
+      'INSERT INTO report_items (report_id, symbol, data) VALUES (?, ?, ?)',
+      [reportId, item.symbol, JSON.stringify(item)]
+    );
+  }
+
+  return reportId;
+}
+
+export async function getReports(): Promise<{ id: number; created_at: string; count: number }[]> {
+  await initDatabase();
+  if (!dbWrapper) return [];
+
+  return await dbWrapper.all(
+    'SELECT r.id, r.created_at, (SELECT COUNT(*) FROM report_items i WHERE i.report_id = r.id) as count FROM reports r ORDER BY r.id DESC'
+  );
+}
+
+export async function getReportById(id: number): Promise<Report | null> {
+  await initDatabase();
+  if (!dbWrapper) return null;
+
+  const report = await dbWrapper.get('SELECT id, created_at FROM reports WHERE id = ?', [id]);
+  if (!report) return null;
+
+  const itemRows = await dbWrapper.all('SELECT symbol, data FROM report_items WHERE report_id = ? ORDER BY id', [id]);
+  const items: ReportItem[] = itemRows.map((r: any) => JSON.parse(r.data));
+
+  return { id: report.id, created_at: report.created_at, items };
 }
 
 // Export for testing

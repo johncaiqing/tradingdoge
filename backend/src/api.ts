@@ -1,8 +1,9 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { SYMBOLS, Interval } from './types';
-import { getStockData, getSignals, initDatabase, clearAllSignals, registerAgent, getAgentByApiKey, getAgentById, getAgentList, updateAgentNotifyConfig, insertComment, getCommentsBySymbol, getCommentsByAgent, toggleCommentLike, getCommentLikeCount, getCommentLikeStatus, getLatestSignals, getLatestDatetime } from './database';
+import { getStockData, getSignals, initDatabase, clearAllSignals, registerAgent, getAgentByApiKey, getAgentById, getAgentList, updateAgentNotifyConfig, insertComment, getCommentsBySymbol, getCommentsByAgent, toggleCommentLike, getCommentLikeCount, getCommentLikeStatus, getLatestSignals, getLatestDatetime, getReports, getReportById, insertReport } from './database';
 import { getCandlesWithMA, CandleWithMA } from './signals';
 import { manualFetch, validateAndFetchIncomplete } from './scheduler';
+import { generateReport } from './report';
 import { notifyNewComment } from './notifier';
 import crypto from 'crypto';
 
@@ -236,6 +237,38 @@ router.get('/latest/:symbol', async (req: Request, res: Response) => {
 router.get('/signals-summary', async (_req: Request, res: Response) => {
   const summary = await getLatestSignals();
   res.json({ summary });
+});
+
+// ============ Report API ============
+
+// List all reports
+router.get('/reports', async (_req: Request, res: Response) => {
+  const reports = await getReports();
+  res.json({ reports });
+});
+
+// Get single report
+router.get('/reports/:id', async (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    return res.status(400).json({ error: 'Invalid report id' });
+  }
+  const report = await getReportById(id);
+  if (!report) {
+    return res.status(404).json({ error: 'Report not found' });
+  }
+  res.json({ report });
+});
+
+// Manually generate and store a report
+router.post('/reports/generate', async (_req: Request, res: Response) => {
+  try {
+    const report = await generateReport();
+    const id = await insertReport(report);
+    res.json({ success: true, id, count: report.items.length, report });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ============ Agent API ============
