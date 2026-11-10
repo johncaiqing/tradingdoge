@@ -37,19 +37,13 @@ export const StockDetail: React.FC = () => {
     close: d.close
   }));
 
-  const ma25Data = data
-    .filter(d => d.ma25 !== null)
-    .map(d => ({
-      time: Math.floor(new Date(d.datetime).getTime() / 1000) as any,
-      value: d.ma25!
-    }));
-
-  const ma90Data = data
-    .filter(d => d.ma90 !== null)
-    .map(d => ({
-      time: Math.floor(new Date(d.datetime).getTime() / 1000) as any,
-      value: d.ma90!
-    }));
+  const buildLine = (field: 'ma20' | 'ma60' | 'ma120' | 'ema20' | 'ema60' | 'ema120') =>
+    data
+      .filter(d => d[field] !== null)
+      .map(d => ({
+        time: Math.floor(new Date(d.datetime).getTime() / 1000) as any,
+        value: d[field]!
+      }));
 
   return (
     <div className="stock-detail">
@@ -78,7 +72,15 @@ export const StockDetail: React.FC = () => {
             {loading ? (
               <div className="loading">Loading chart...</div>
             ) : (
-              <StockChart data={chartData} ma25={ma25Data} ma90={ma90Data} />
+              <StockChart
+                data={chartData}
+                ma20={buildLine('ma20')}
+                ma60={buildLine('ma60')}
+                ma120={buildLine('ma120')}
+                ema20={buildLine('ema20')}
+                ema60={buildLine('ema60')}
+                ema120={buildLine('ema120')}
+              />
             )}
             <div className="chart-watermark">Tradingdoge.com</div>
           </div>

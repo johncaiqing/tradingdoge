@@ -21,6 +21,29 @@ export function calculateSMA(data: OHLCV[], period: number): (number | null)[] {
   return sma;
 }
 
+// 计算指数移动平均线
+export function calculateEMA(data: OHLCV[], period: number): (number | null)[] {
+  const ema: (number | null)[] = [];
+  const multiplier = 2 / (period + 1);
+
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      ema.push(null);
+    } else if (i === period - 1) {
+      // 用 SMA 作为 EMA 的初始值
+      let sum = 0;
+      for (let j = 0; j < period; j++) {
+        sum += data[i - j].close;
+      }
+      ema.push(sum / period);
+    } else {
+      ema.push((data[i].close - ema[i - 1]!) * multiplier + ema[i - 1]!);
+    }
+  }
+
+  return ema;
+}
+
 // 检测当前均线状态并生成信号
 export function detectCrossovers(
   symbol: string,
@@ -101,14 +124,22 @@ export interface CandleWithMA {
   low: number;
   close: number;
   volume: number;
-  ma25: number | null;
-  ma90: number | null;
+  ma20: number | null;
+  ma60: number | null;
+  ma120: number | null;
+  ema20: number | null;
+  ema60: number | null;
+  ema120: number | null;
 }
 
 export async function getCandlesWithMA(symbol: string, interval: string, limit?: number): Promise<CandleWithMA[]> {
   const data = await getStockData(symbol, interval, limit);
-  const ma25 = calculateSMA(data, 25);
-  const ma90 = calculateSMA(data, 90);
+  const ma20 = calculateSMA(data, 20);
+  const ma60 = calculateSMA(data, 60);
+  const ma120 = calculateSMA(data, 120);
+  const ema20 = calculateEMA(data, 20);
+  const ema60 = calculateEMA(data, 60);
+  const ema120 = calculateEMA(data, 120);
 
   return data.map((d, i) => ({
     datetime: d.datetime,
@@ -117,8 +148,12 @@ export async function getCandlesWithMA(symbol: string, interval: string, limit?:
     low: d.low,
     close: d.close,
     volume: d.volume,
-    ma25: ma25[i],
-    ma90: ma90[i]
+    ma20: ma20[i],
+    ma60: ma60[i],
+    ma120: ma120[i],
+    ema20: ema20[i],
+    ema60: ema60[i],
+    ema120: ema120[i]
   }));
 }
 

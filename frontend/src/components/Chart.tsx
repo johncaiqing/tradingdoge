@@ -1,6 +1,11 @@
 import React from 'react';
 import type { UTCTimestamp } from 'lightweight-charts';
 
+export interface LineData {
+  time: UTCTimestamp;
+  value: number;
+}
+
 interface ChartProps {
   data: Array<{
     time: UTCTimestamp;
@@ -9,16 +14,30 @@ interface ChartProps {
     low: number;
     close: number;
   }>;
-  ma25: Array<{ time: UTCTimestamp; value: number }>;
-  ma90: Array<{ time: UTCTimestamp; value: number }>;
+  ma20: LineData[];
+  ma60: LineData[];
+  ma120: LineData[];
+  ema20: LineData[];
+  ema60: LineData[];
+  ema120: LineData[];
 }
 
-export const StockChart: React.FC<ChartProps> = ({ data, ma25, ma90 }) => {
+const LINE_CONFIGS: { key: keyof Omit<ChartProps, 'data'>; color: string }[] = [
+  { key: 'ma20', color: '#ffd700' },
+  { key: 'ma60', color: '#00bfff' },
+  { key: 'ma120', color: '#ff8c00' },
+  { key: 'ema20', color: '#ff69b4' },
+  { key: 'ema60', color: '#9370db' },
+  { key: 'ema120', color: '#32cd32' }
+];
+
+export const StockChart: React.FC<ChartProps> = ({ data, ma20, ma60, ma120, ema20, ema60, ema120 }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const chartRef = React.useRef<any>(null);
   const seriesRef = React.useRef<any>(null);
-  const line25Ref = React.useRef<any>(null);
-  const line90Ref = React.useRef<any>(null);
+  const lineRefs = React.useRef<Record<string, any>>({});
+
+  const lineData = { ma20, ma60, ma120, ema20, ema60, ema120 };
 
   React.useEffect(() => {
     if (!containerRef.current) return;
@@ -65,28 +84,23 @@ export const StockChart: React.FC<ChartProps> = ({ data, ma25, ma90 }) => {
         wickDownColor: '#ff4444'
       });
 
-      const line25 = chart.addLineSeries({
-        color: '#ffd700',
-        lineWidth: 2,
-        priceLineVisible: false,
-        lastValueVisible: false
-      });
-
-      const line90 = chart.addLineSeries({
-        color: '#00bfff',
-        lineWidth: 2,
-        priceLineVisible: false,
-        lastValueVisible: false
-      });
-
       seriesRef.current = candleSeries;
-      line25Ref.current = line25;
-      line90Ref.current = line90;
+
+      for (const { key, color } of LINE_CONFIGS) {
+        const line = chart.addLineSeries({
+          color,
+          lineWidth: 2,
+          priceLineVisible: false,
+          lastValueVisible: false
+        });
+        lineRefs.current[key] = line;
+      }
 
       if (data.length > 0) {
         candleSeries.setData(data);
-        line25.setData(ma25);
-        line90.setData(ma90);
+        for (const { key } of LINE_CONFIGS) {
+          lineRefs.current[key]?.setData(lineData[key]);
+        }
         chart.timeScale().fitContent();
       }
 
@@ -111,11 +125,12 @@ export const StockChart: React.FC<ChartProps> = ({ data, ma25, ma90 }) => {
   React.useEffect(() => {
     if (seriesRef.current && data.length > 0) {
       seriesRef.current.setData(data);
-      line25Ref.current?.setData(ma25);
-      line90Ref.current?.setData(ma90);
+      for (const { key } of LINE_CONFIGS) {
+        lineRefs.current[key]?.setData(lineData[key]);
+      }
       chartRef.current?.timeScale().fitContent();
     }
-  }, [data, ma25, ma90]);
+  }, [data, ma20, ma60, ma120, ema20, ema60, ema120]);
 
   return <div ref={containerRef} className="chart-wrapper" />;
 };

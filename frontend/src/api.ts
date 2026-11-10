@@ -5,8 +5,12 @@ export interface OHLCV {
   low: number;
   close: number;
   volume: number;
-  ma25: number | null;
-  ma90: number | null;
+  ma20: number | null;
+  ma60: number | null;
+  ma120: number | null;
+  ema20: number | null;
+  ema60: number | null;
+  ema120: number | null;
 }
 
 export interface Stock {
