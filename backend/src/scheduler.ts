@@ -56,6 +56,7 @@ export async function generateAndStoreReport(): Promise<number> {
     if (data.length > 0) {
       await upsertStockData(symbol as any, '4h', data);
     }
+    await processStockData(symbol as any, '4h');
     await new Promise(resolve => setTimeout(resolve, 8000));
   }
 
