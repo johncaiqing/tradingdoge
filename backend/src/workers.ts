@@ -1,4 +1,4 @@
-import { SYMBOLS, SYMBOL_NAMES, INTERVALS, Interval } from './types';
+import { SYMBOLS, SYMBOL_NAMES, CRYPTO_SYMBOLS, INTERVALS, Interval } from './types';
 import { upsertStockData, getLatestDatetime, initDatabase } from './database';
 import { fetchTimeSeries } from './twelvedata';
 import { processStockData } from './signals';
@@ -31,7 +31,8 @@ export default {
       if (path === '/api/stocks' && method === 'GET') {
         const stocks = SYMBOLS.map(s => ({
           symbol: s,
-          name: SYMBOL_NAMES[s] || s
+          name: SYMBOL_NAMES[s] || s,
+          type: CRYPTO_SYMBOLS.has(s) ? 'crypto' : 'stock'
         }));
         return jsonResponse(stocks);
       }

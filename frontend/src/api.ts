@@ -16,6 +16,7 @@ export interface OHLCV {
 export interface Stock {
   symbol: string;
   name: string;
+  type: 'stock' | 'crypto';
 }
 
 export interface Signal {
@@ -75,21 +76,6 @@ export interface SignalStatus {
 
 export async function fetchSignalStatus(symbol: string): Promise<SignalStatus> {
   const res = await fetch(`${API_BASE}/signal-status/${symbol}`);
-  return res.json();
-}
-
-// Signals summary types
-export interface SignalData {
-  signal_type: string;
-  datetime: string;
-}
-
-export interface SignalsSummary {
-  summary: Record<string, Record<string, SignalData>>;
-}
-
-export async function fetchSignalsSummary(): Promise<SignalsSummary> {
-  const res = await fetch(`${API_BASE}/signals-summary`);
   return res.json();
 }
 

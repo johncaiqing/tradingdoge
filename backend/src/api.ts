@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { SYMBOLS, SYMBOL_NAMES, Interval } from './types';
+import { SYMBOLS, SYMBOL_NAMES, CRYPTO_SYMBOLS, Interval } from './types';
 import { getStockData, getSignals, initDatabase, clearAllSignals, registerAgent, getAgentByApiKey, getAgentById, getAgentList, updateAgentNotifyConfig, insertComment, getCommentsBySymbol, getCommentsByAgent, toggleCommentLike, getCommentLikeCount, getCommentLikeStatus, getLatestSignals, getLatestDatetime, getReports, getReportById, insertReport } from './database';
 import { getCandlesWithMA, CandleWithMA } from './signals';
 import { manualFetch, validateAndFetchIncomplete } from './scheduler';
@@ -16,7 +16,8 @@ initDatabase();
 router.get('/stocks', (_req: Request, res: Response) => {
   const stocks = SYMBOLS.map(s => ({
     symbol: s,
-    name: SYMBOL_NAMES[s] || s
+    name: SYMBOL_NAMES[s] || s,
+    type: CRYPTO_SYMBOLS.has(s) ? 'crypto' : 'stock'
   }));
   res.json(stocks);
 });

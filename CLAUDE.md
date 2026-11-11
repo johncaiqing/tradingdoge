@@ -6,12 +6,11 @@ TradingDoge - Stock display web application with TradingView charts and moving a
 
 ## Supported Stocks
 
-- SPY - S&P 500 ETF
-- BTC/USD - Bitcoin
-- UVIX - Invesco NASDAQ 100 Low Volatility ETN
-- GLD - SPDR Gold Shares
-- MSTR - MicroStrategy
-- SNDK, SPCX, SOXL, MU, SKHY, SOX, INTC, MRVL, NVDA, TSLA, GOOG, AMD, AVAX, COIN, META, AAPL, MSFT, ORCL, AMZN, HOOD
+美股/ETF（18，Twelvedata 数据源）：
+SOXL, SNDK, MU, INTC, SKHY, MSTR, NVDA, SPY, GOOG, AAPL, TSLA, SPCX, MRVL, COIN, NBIS, RKLB, QQQ, EWY
+
+加密货币（11，币安 data-api.binance.vision 数据源）：
+BTC, ETH, SOL, XRP, DOGE, NEAR, SUI, ARB, ENA, ZEC, HYPE
 
 ## 数据获取
 
