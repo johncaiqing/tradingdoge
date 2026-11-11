@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { SYMBOLS, INTERVALS, Interval } from '../src/types';
+import { SYMBOLS, Interval } from '../src/types';
 import { upsertStockData, getLatestDatetime } from '../src/database';
 import { fetchTimeSeries } from '../src/twelvedata';
 import { processStockData } from '../src/signals';
@@ -10,7 +10,7 @@ async function main() {
   console.log('Fetching stock data (full refresh)...');
 
   for (const symbol of SYMBOLS) {
-    for (const interval of INTERVALS) {
+    for (const interval of ['4h']) {
       console.log(`Fetching ${symbol} ${interval}...`);
       // 每次获取最新的 400 条数据，由 upsert 处理重复
       const data = await fetchTimeSeries(symbol as any, interval as Interval, 400);

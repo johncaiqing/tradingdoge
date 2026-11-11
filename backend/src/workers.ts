@@ -1,4 +1,4 @@
-import { SYMBOLS, SYMBOL_NAMES, CRYPTO_SYMBOLS, INTERVALS, Interval } from './types';
+import { SYMBOLS, SYMBOL_NAMES, CRYPTO_SYMBOLS, Interval } from './types';
 import { upsertStockData, getLatestDatetime, initDatabase } from './database';
 import { fetchTimeSeries } from './twelvedata';
 import { processStockData } from './signals';
@@ -119,7 +119,7 @@ export default {
   // 本地手动触发（Vercel 负责定时抓取）
   async doManualFetch(symbolParam?: string | null, intervalParam?: string | null): Promise<void> {
     const symbolsToFetch = symbolParam ? [symbolParam] : SYMBOLS;
-    const intervalsToFetch = intervalParam ? [intervalParam] : INTERVALS.filter(i => i !== '1week' && i !== '1month');
+    const intervalsToFetch = intervalParam ? [intervalParam] : ['4h'];
 
     // For scheduled fetch, use incremental update (get latest datetime from DB)
     // For manual fetch with specific symbol, fetch more data to ensure we have latest

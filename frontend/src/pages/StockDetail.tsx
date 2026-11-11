@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchStockData, fetchDailySignals, fetchSignalStatus, OHLCV, Interval, INTERVALS, DailySignal, SignalStatus } from '../api';
+import { fetchStockData, fetchSignalStatus, OHLCV, Interval, INTERVALS, SignalStatus } from '../api';
 import StockChart from '../components/Chart';
 import './StockDetail.css';
 
 export const StockDetail: React.FC = () => {
   const { symbol } = useParams<{ symbol: string }>();
-  const [interval, setInterval] = useState<Interval>('1day');
+  const [interval, setInterval] = useState<Interval>('4h');
   const [data, setData] = useState<OHLCV[]>([]);
-  const [dailySignals, setDailySignals] = useState<DailySignal[]>([]);
   const [signalStatus, setSignalStatus] = useState<SignalStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -18,11 +17,9 @@ export const StockDetail: React.FC = () => {
     setLoading(true);
     Promise.all([
       fetchStockData(symbol, interval),
-      fetchDailySignals(symbol),
       fetchSignalStatus(symbol)
-    ]).then(([stockData, signalData, status]) => {
+    ]).then(([stockData, status]) => {
       setData(stockData.data);
-      setDailySignals(signalData.data);
       setSignalStatus(status);
       setLoading(false);
     });
@@ -84,32 +81,6 @@ export const StockDetail: React.FC = () => {
             )}
             <div className="chart-watermark">Tradingdoge.com</div>
           </div>
-
-          <div className="signals-section">
-            <h2 className="signals-title">Daily Signals (Last 10 Days)</h2>
-            <table className="signals-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>1h</th>
-                  <th>2h</th>
-                  <th>4h</th>
-                  <th>1day</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dailySignals.map(row => (
-                  <tr key={row.date}>
-                    <td>{row.date}</td>
-                    <td className={row['1h'] === 'B' ? 'signal-b' : row['1h'] === 'S' ? 'signal-s' : ''}>{row['1h']}</td>
-                    <td className={row['2h'] === 'B' ? 'signal-b' : row['2h'] === 'S' ? 'signal-s' : ''}>{row['2h']}</td>
-                    <td className={row['4h'] === 'B' ? 'signal-b' : row['4h'] === 'S' ? 'signal-s' : ''}>{row['4h']}</td>
-                    <td className={row['1day'] === 'B' ? 'signal-b' : row['1day'] === 'S' ? 'signal-s' : ''}>{row['1day']}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
 
         <div className="detail-sidebar">
@@ -143,7 +114,7 @@ export const StockDetail: React.FC = () => {
                 </div>
               )}
               <div className="signal-badge-details">
-                {['1h', '2h', '4h', '1day'].map(tf => (
+                {['4h'].map(tf => (
                   <span key={tf} className={`signal-dot ${signalStatus.signals[tf]?.signal_type === 'B' ? 'dot-b' : 'dot-s'}`}>
                     {tf} {signalStatus.signals[tf]?.signal_type || '-'}
                   </span>

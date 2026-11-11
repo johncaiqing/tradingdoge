@@ -28,7 +28,7 @@ export interface Signal {
   price: number;
 }
 
-export const INTERVALS = ['1h', '2h', '4h', '1day', '1week', '1month'] as const;
+export const INTERVALS = ['4h'] as const;
 export type Interval = typeof INTERVALS[number];
 
 // Use environment variable for API base, default to /api for local development
@@ -40,26 +40,13 @@ export async function fetchStocks(): Promise<Stock[]> {
   return res.json();
 }
 
-export async function fetchStockData(symbol: string, interval: string = '1day'): Promise<{ symbol: string; interval: string; data: OHLCV[] }> {
+export async function fetchStockData(symbol: string, interval: string = '4h'): Promise<{ symbol: string; interval: string; data: OHLCV[] }> {
   const res = await fetch(`${API_BASE}/stock/${symbol}?interval=${interval}`);
   return res.json();
 }
 
 export async function fetchSignals(symbol: string, days: number = 30): Promise<{ symbol: string; days: number; signals: Signal[] }> {
   const res = await fetch(`${API_BASE}/signals/${symbol}?days=${days}`);
-  return res.json();
-}
-
-export interface DailySignal {
-  date: string;
-  '1h': 'B' | 'S' | '-';
-  '2h': 'B' | 'S' | '-';
-  '4h': 'B' | 'S' | '-';
-  '1day': 'B' | 'S' | '-';
-}
-
-export async function fetchDailySignals(symbol: string): Promise<{ symbol: string; days: number; data: DailySignal[] }> {
-  const res = await fetch(`${API_BASE}/signals-daily/${symbol}`);
   return res.json();
 }
 

@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { schedule } from 'node-cron';
 import apiRouter from './api';
 import { initDatabase } from './database';
 import { generateAndStoreReport } from './scheduler';
@@ -34,8 +35,7 @@ const startServer = async () => {
 // Start if not being imported
 startServer().catch(console.error);
 
-// 每 4 小时生成一份报告
-const REPORT_INTERVAL_MS = 4 * 60 * 60 * 1000;
-setInterval(() => {
+// 对齐币安 4h K 线收盘（UTC 00:05/04:05/08:05/12:05/16:05/20:05），收盘后抓取并生成报告
+schedule('5 0,4,8,12,16,20 * * *', () => {
   generateAndStoreReport().catch(err => console.error('Report generation failed:', err));
-}, REPORT_INTERVAL_MS);
+}, { timezone: 'UTC' });

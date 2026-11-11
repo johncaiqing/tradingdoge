@@ -1,13 +1,13 @@
 import dotenv from 'dotenv';
-import { SYMBOLS, INTERVALS, Interval } from '../src/types';
+import { SYMBOLS, Interval } from '../src/types';
 import { upsertStockData, getLatestDatetime } from '../src/database';
 import { fetchTimeSeries } from '../src/twelvedata';
 import { processStockData } from '../src/signals';
 
 dotenv.config();
 
-// 只有这几个间隔（排除 1week 和 1month）
-const INTERVALS_TO_FETCH = INTERVALS.filter(i => i !== '1week' && i !== '1month');
+// 只采集 4h
+const INTERVALS_TO_FETCH = ['4h'];
 
 // Twelvedata 免费版每分钟 8 次请求，每支股票后等待
 const DELAY_BETWEEN_CALLS_MS = 60000;

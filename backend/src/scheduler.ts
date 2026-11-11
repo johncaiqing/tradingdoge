@@ -1,4 +1,4 @@
-import { SYMBOLS, INTERVALS, Interval } from './types';
+import { SYMBOLS, Interval } from './types';
 import { upsertStockData, getLatestDatetime, getStockData, insertReport } from './database';
 import { fetchTimeSeries } from './twelvedata';
 import { processStockData } from './signals';
@@ -9,7 +9,7 @@ export async function validateAndFetchIncomplete() {
   const results: { symbol: string; interval: string; status: string }[] = [];
 
   for (const symbol of SYMBOLS) {
-    for (const interval of INTERVALS) {
+    for (const interval of ['4h']) {
       // 获取今天的日期（纽约时间）
       const now = new Date();
       const nyTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -70,7 +70,7 @@ export async function manualFetch() {
   console.log('Manual fetch triggered...');
 
   for (const symbol of SYMBOLS) {
-    for (const interval of INTERVALS) {
+    for (const interval of ['4h']) {
       // 获取当前数据库中该 symbol+interval 的最新时间戳
       const latestDatetime = await getLatestDatetime(symbol as string, interval as string);
 
