@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { OHLCV, SYMBOLS, INTERVALS, Interval } from './types';
+import { OHLCV, SYMBOLS, INTERVALS, Interval, CRYPTO_SYMBOLS } from './types';
+import { fetchBinanceKlines } from './binance';
 
 const API_KEY = process.env.TWELVEDATA_API_KEY || '7c16a4111f8740719dab9fbef106313f';
 const BASE_URL = 'https://api.twelvedata.com/time_series';
@@ -12,6 +13,10 @@ export async function fetchTimeSeries(
   start_date?: string,
   maxRetries: number = 3
 ): Promise<OHLCV[]> {
+  if (CRYPTO_SYMBOLS.has(symbol)) {
+    return fetchBinanceKlines(symbol, interval, output_size, start_date);
+  }
+
   let lastError = '';
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {

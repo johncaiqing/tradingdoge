@@ -23,7 +23,7 @@ export const StockList: React.FC = () => {
       <h1 className="page-title">TRADINGDOGE</h1>
       <div className="stock-grid">
         {stocks.map(stock => (
-          <Link key={stock.symbol} to={`/stock/${encodeURIComponent(stock.symbol).replace('BTC%2FUSD', 'BTC-USD')}`} className="stock-card">
+          <Link key={stock.symbol} to={`/stock/${stock.symbol}`} className="stock-card">
             <div className="stock-symbol">{stock.symbol}</div>
             <div className="stock-name">{stock.name}</div>
           </Link>

@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { SYMBOLS, Interval } from './types';
+import { SYMBOLS, SYMBOL_NAMES, Interval } from './types';
 import { getStockData, getSignals, initDatabase, clearAllSignals, registerAgent, getAgentByApiKey, getAgentById, getAgentList, updateAgentNotifyConfig, insertComment, getCommentsBySymbol, getCommentsByAgent, toggleCommentLike, getCommentLikeCount, getCommentLikeStatus, getLatestSignals, getLatestDatetime, getReports, getReportById, insertReport } from './database';
 import { getCandlesWithMA, CandleWithMA } from './signals';
 import { manualFetch, validateAndFetchIncomplete } from './scheduler';
@@ -16,16 +16,14 @@ initDatabase();
 router.get('/stocks', (_req: Request, res: Response) => {
   const stocks = SYMBOLS.map(s => ({
     symbol: s,
-    name: s === 'SPY' ? 'S&P 500 ETF' : s === 'BTC/USD' ? 'Bitcoin' : s === 'UVIX' ? 'Invesco NASDAQ 100 Low Volatility ETN' : s === 'GLD' ? 'SPDR Gold Shares' : s
+    name: SYMBOL_NAMES[s] || s
   }));
   res.json(stocks);
 });
 
 // Get stock data with moving averages
 router.get('/stock/:symbol', async (req: Request, res: Response) => {
-  let symbol = decodeURIComponent(req.params.symbol);
-  // Frontend uses BTC-USD, backend uses BTC/USD
-  symbol = symbol.replace('BTC-USD', 'BTC/USD');
+  const symbol = decodeURIComponent(req.params.symbol);
   const interval = (req.query.interval as string) || '1day';
 
   if (!SYMBOLS.includes(symbol as any)) {
@@ -43,8 +41,7 @@ router.get('/stock/:symbol', async (req: Request, res: Response) => {
 
 // Get daily signals summary
 router.get('/signals-daily/:symbol', async (req: Request, res: Response) => {
-  let symbol = decodeURIComponent(req.params.symbol);
-  symbol = symbol.replace('BTC-USD', 'BTC/USD');
+  const symbol = decodeURIComponent(req.params.symbol);
   const days = 10;
 
   if (!SYMBOLS.includes(symbol as any)) {
@@ -145,8 +142,7 @@ function calcBuyPoint(dailyData: { open: number; high: number; low: number; clos
 
 // Get consolidated signal status (all B = BUY with buy point, else SELL)
 router.get('/signal-status/:symbol', async (req: Request, res: Response) => {
-  let symbol = decodeURIComponent(req.params.symbol);
-  symbol = symbol.replace('BTC-USD', 'BTC/USD');
+  const symbol = decodeURIComponent(req.params.symbol);
 
   if (!SYMBOLS.includes(symbol as any)) {
     return res.status(400).json({ error: 'Invalid symbol' });
@@ -180,8 +176,7 @@ router.get('/signal-status/:symbol', async (req: Request, res: Response) => {
 
 // Get B/S signals
 router.get('/signals/:symbol', async (req: Request, res: Response) => {
-  let symbol = decodeURIComponent(req.params.symbol);
-  symbol = symbol.replace('BTC-USD', 'BTC/USD');
+  const symbol = decodeURIComponent(req.params.symbol);
   const days = parseInt(req.query.days as string) || 30;
 
   if (!SYMBOLS.includes(symbol as any)) {
@@ -346,8 +341,7 @@ router.post('/agents/notify-config', authenticateAgent, async (req: Request, res
 
 // Get stock comments
 router.get('/comments/:symbol', async (req: Request, res: Response) => {
-  let symbol = decodeURIComponent(req.params.symbol);
-  symbol = symbol.replace('BTC-USD', 'BTC/USD');
+  const symbol = decodeURIComponent(req.params.symbol);
 
   const comments = await getCommentsBySymbol(symbol);
   const currentAgent = (req as any).agent;
@@ -364,8 +358,7 @@ router.get('/comments/:symbol', async (req: Request, res: Response) => {
 
 // Post comment
 router.post('/comments/:symbol', authenticateAgent, async (req: Request, res: Response) => {
-  let symbol = decodeURIComponent(req.params.symbol);
-  symbol = symbol.replace('BTC-USD', 'BTC/USD');
+  const symbol = decodeURIComponent(req.params.symbol);
 
   const { content } = req.body;
   if (!content || content.trim().length === 0) {

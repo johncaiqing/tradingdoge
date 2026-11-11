@@ -1,4 +1,4 @@
-import { SYMBOLS, INTERVALS, Interval } from './types';
+import { SYMBOLS, SYMBOL_NAMES, INTERVALS, Interval } from './types';
 import { upsertStockData, getLatestDatetime, initDatabase } from './database';
 import { fetchTimeSeries } from './twelvedata';
 import { processStockData } from './signals';
@@ -31,14 +31,14 @@ export default {
       if (path === '/api/stocks' && method === 'GET') {
         const stocks = SYMBOLS.map(s => ({
           symbol: s,
-          name: s === 'SPY' ? 'S&P 500 ETF' : s === 'BTC/USD' ? 'Bitcoin' : s === 'UVIX' ? 'Invesco NASDAQ 100 Low Volatility ETN' : s === 'GLD' ? 'SPDR Gold Shares' : s
+          name: SYMBOL_NAMES[s] || s
         }));
         return jsonResponse(stocks);
       }
 
       const stockMatch = path.match(/^\/api\/stock\/([^/]+)$/);
       if (stockMatch && method === 'GET') {
-        let symbol = decodeURIComponent(stockMatch[1]).replace('BTC-USD', 'BTC/USD');
+        let symbol = decodeURIComponent(stockMatch[1]);
         const interval = url.searchParams.get('interval') || '1day';
         const { getCandlesWithMA } = await import('./signals');
         const data = await getCandlesWithMA(symbol, interval);
@@ -47,7 +47,7 @@ export default {
 
       const signalsMatch = path.match(/^\/api\/signals\/([^/]+)$/);
       if (signalsMatch && method === 'GET') {
-        let symbol = decodeURIComponent(signalsMatch[1]).replace('BTC-USD', 'BTC/USD');
+        let symbol = decodeURIComponent(signalsMatch[1]);
         const days = parseInt(url.searchParams.get('days') || '30');
         const { getSignals } = await import('./database');
         const signals = await getSignals(symbol, days);
@@ -56,7 +56,7 @@ export default {
 
       const signalsDailyMatch = path.match(/^\/api\/signals-daily\/([^/]+)$/);
       if (signalsDailyMatch && method === 'GET') {
-        let symbol = decodeURIComponent(signalsDailyMatch[1]).replace('BTC-USD', 'BTC/USD');
+        let symbol = decodeURIComponent(signalsDailyMatch[1]);
         const days = 10;
         const { getSignals } = await import('./database');
         const signals = await getSignals(symbol, days);
@@ -83,7 +83,7 @@ export default {
 
       const commentsMatch = path.match(/^\/api\/comments\/([^/]+)$/);
       if (commentsMatch && method === 'GET') {
-        let symbol = decodeURIComponent(commentsMatch[1]).replace('BTC-USD', 'BTC/USD');
+        let symbol = decodeURIComponent(commentsMatch[1]);
         const { getCommentsBySymbol } = await import('./database');
         const comments = await getCommentsBySymbol(symbol);
         return jsonResponse({ comments });

@@ -65,7 +65,7 @@ export function Dashboard() {
                   </td>
                 ))}
                 <td>
-                  <Link to={`/stock/${encodeURIComponent(symbol).replace('BTC%2FUSD', 'BTC-USD')}`} className="detail-link">
+                  <Link to={`/stock/${symbol}`} className="detail-link">
                     View
                   </Link>
                 </td>
