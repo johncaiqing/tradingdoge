@@ -52,7 +52,7 @@ function findSwingPoints(data: OHLCV[], lookback = 2): { lows: number[]; highs: 
   return { lows, highs };
 }
 
-// 三道门定价：返回入场/止损/T1/T2/盈亏比/卡门
+// 定价：返回入场/止损/T1/T2/盈亏比
 function priceSide(data: OHLCV[], maValues: number[], side: 'long' | 'short') {
   const [ma20, ma60, ma120, ema20, ema60, ema120] = maValues;
   const upperBand = Math.max(...maValues);
@@ -79,9 +79,7 @@ function priceSide(data: OHLCV[], maValues: number[], side: 'long' | 'short') {
     t2 = round2(t2);
 
     const rr = (t1 - entry) / r;
-    const threeR = entry + 3 * r;
-    const blocked = threeR >= upperBand ? '门②(3R空间不足)' : rr < 1.5 ? '盈亏比<1.5' : null;
-    return { entry, stop, t1, t2, rr: round2(rr), blocked };
+    return { entry, stop, t1, t2, rr: round2(rr) };
   } else {
     const entry = roundDown05(ma20);
     const swingHigh = highs.length ? highs[highs.length - 1] : prevCandle.high;
@@ -101,9 +99,7 @@ function priceSide(data: OHLCV[], maValues: number[], side: 'long' | 'short') {
     t2 = round2(t2);
 
     const rr = (entry - t1) / r;
-    const threeR = entry - 3 * r;
-    const blocked = threeR <= lowerBand ? '门②(3R空间不足)' : rr < 1.5 ? '盈亏比<1.5' : null;
-    return { entry, stop, t1, t2, rr: round2(rr), blocked };
+    return { entry, stop, t1, t2, rr: round2(rr) };
   }
 }
 
@@ -149,21 +145,6 @@ function analyzeSymbol(symbol: string, data: OHLCV[]): ReportItem | null {
   if (rating === 'LONG' || rating === 'SHORT') {
     const side = rating === 'LONG' ? 'long' : 'short';
     const p = priceSide(data, maValues, side);
-    if (p.blocked) {
-      // 有结构但跑不通 → 观望，保留待命价
-      return {
-        ...base,
-        rating: 'WATCH',
-        entry: p.entry,
-        stop: p.stop,
-        t1: p.t1,
-        t2: p.t2,
-        riskReward: p.rr,
-        trigger: side === 'long' ? `4H 收盘站上 ${round2(ma20)}` : `4H 收盘跌破 ${round2(ma20)}`,
-        noTrade: null,
-        blocked: p.blocked
-      };
-    }
     return {
       ...base,
       rating,
@@ -209,7 +190,7 @@ function analyzeSymbol(symbol: string, data: OHLCV[]): ReportItem | null {
     riskReward: p.rr,
     trigger: side === 'long' ? `4H 收盘站上 ${round2(ma20)} 再买` : `4H 收盘跌破 ${round2(ma20)} 再空`,
     noTrade: '不满足条件不追',
-    blocked: p.blocked
+    blocked: null
   };
 }
 
