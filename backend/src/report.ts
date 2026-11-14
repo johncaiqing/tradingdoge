@@ -2,7 +2,7 @@ import { SYMBOLS, OHLCV } from './types';
 import { getStockData } from './database';
 import { calculateSMA, calculateEMA } from './signals';
 
-export type Rating = 'LONG' | 'SHORT' | 'WATCH' | 'DEFEND';
+export type Rating = 'LONG' | 'SHORT' | 'WATCH';
 
 export interface ReportItem {
   symbol: string;
@@ -17,7 +17,6 @@ export interface ReportItem {
   riskReward: number | null;
   trigger: string | null;
   noTrade: string | null;
-  blocked: string | null;
   ma20: number;
   ma60: number;
   ma120: number;
@@ -54,14 +53,13 @@ function findSwingPoints(data: OHLCV[], lookback = 2): { lows: number[]; highs: 
 
 // 定价：返回入场/止损/T1/T2/盈亏比
 function priceSide(data: OHLCV[], maValues: number[], side: 'long' | 'short') {
-  const [ma20, ma60, ma120, ema20, ema60, ema120] = maValues;
   const upperBand = Math.max(...maValues);
   const lowerBand = Math.min(...maValues);
   const { lows, highs } = findSwingPoints(data, 2);
   const prevCandle = data[data.length - 2];
 
   if (side === 'long') {
-    const entry = roundUp05(ma20);
+    const entry = roundUp05(upperBand);
     const swingLow = lows.length ? lows[lows.length - 1] : prevCandle.low;
     let stop = swingLow;
     const stopPct = (entry - stop) / entry;
@@ -72,7 +70,7 @@ function priceSide(data: OHLCV[], maValues: number[], side: 'long' | 'short') {
     const r = entry - stop;
     const resAbove = highs.filter(h => h > entry).sort((a, b) => a - b);
     let t1 = resAbove[0];
-    if (t1 == null || t1 <= entry) t1 = upperBand > entry ? upperBand : entry + 2 * r;
+    if (t1 == null || t1 <= entry) t1 = entry + 2 * r;
     let t2 = resAbove[1];
     if (t2 == null || t2 <= t1) t2 = t1 + (t1 - entry);
     t1 = round2(t1);
@@ -81,7 +79,7 @@ function priceSide(data: OHLCV[], maValues: number[], side: 'long' | 'short') {
     const rr = (t1 - entry) / r;
     return { entry, stop, t1, t2, rr: round2(rr) };
   } else {
-    const entry = roundDown05(ma20);
+    const entry = roundDown05(lowerBand);
     const swingHigh = highs.length ? highs[highs.length - 1] : prevCandle.high;
     let stop = swingHigh;
     const stopPct = (stop - entry) / entry;
@@ -92,7 +90,7 @@ function priceSide(data: OHLCV[], maValues: number[], side: 'long' | 'short') {
     const r = stop - entry;
     const supBelow = lows.filter(l => l < entry).sort((a, b) => b - a);
     let t1 = supBelow[0];
-    if (t1 == null || t1 >= entry) t1 = lowerBand < entry ? lowerBand : entry - 2 * r;
+    if (t1 == null || t1 >= entry) t1 = entry - 2 * r;
     let t2 = supBelow[1];
     if (t2 == null || t2 >= t1) t2 = t1 - (entry - t1);
     t1 = round2(t1);
@@ -125,21 +123,15 @@ function analyzeSymbol(symbol: string, data: OHLCV[]): ReportItem | null {
   const prevClose = data[last - 1].close;
   const changePct = round2(((close - prevClose) / prevClose) * 100);
   const maValues = [ma20, ma60, ma120, ema20, ema60, ema120];
-  const spread = (Math.max(...maValues) - Math.min(...maValues)) / close;
-  const dense = spread <= 0.02;
-
-  const bullishAlign = ma20 > ma60 && ma60 > ma120 && ema20 > ema60 && ema60 > ema120;
-  const bearishAlign = ma20 < ma60 && ma60 < ma120 && ema20 < ema60 && ema60 < ema120;
-  const aboveAll = close > Math.max(...maValues);
-  const belowAll = close < Math.min(...maValues);
+  const upperBand = Math.max(...maValues);
+  const lowerBand = Math.min(...maValues);
+  const dense = (upperBand - lowerBand) / close <= 0.02;
 
   const base = { symbol, price: round2(close), changePct, dense, ma20, ma60, ma120, ema20, ema60, ema120 };
 
   let rating: Rating;
-  if (changePct < -8) rating = 'DEFEND';
-  else if (bullishAlign && close > ma20) rating = 'LONG';
-  else if (bearishAlign && close < ma20) rating = 'SHORT';
-  else if (belowAll) rating = 'DEFEND';
+  if (dense && close > upperBand) rating = 'LONG';
+  else if (dense && close < lowerBand) rating = 'SHORT';
   else rating = 'WATCH';
 
   if (rating === 'LONG' || rating === 'SHORT') {
@@ -153,31 +145,15 @@ function analyzeSymbol(symbol: string, data: OHLCV[]): ReportItem | null {
       t1: p.t1,
       t2: p.t2,
       riskReward: p.rr,
-      trigger: side === 'long' ? `4H 收盘站上 ${round2(ma20)}` : `4H 收盘跌破 ${round2(ma20)}`,
+      trigger: side === 'long' ? `4H 收盘站上 ${round2(upperBand)}` : `4H 收盘跌破 ${round2(lowerBand)}`,
       noTrade: side === 'long'
         ? `跌破 ${p.stop.toFixed(2)} 取消计划`
-        : `收复 ${p.stop.toFixed(2)} 取消计划`,
-      blocked: null
+        : `收复 ${p.stop.toFixed(2)} 取消计划`
     };
   }
 
-  if (rating === 'DEFEND') {
-    return {
-      ...base,
-      rating,
-      entry: null,
-      stop: null,
-      t1: null,
-      t2: null,
-      riskReward: null,
-      trigger: null,
-      noTrade: null,
-      blocked: changePct < -8 ? '单周期暴跌>8%' : '跌破全部均线'
-    };
-  }
-
-  // WATCH：给待命价单
-  const tiltLong = close > ma60;
+  // WATCH：均线不密集，或密集未突破 → 观望，给突破待命价
+  const tiltLong = close > (upperBand + lowerBand) / 2;
   const side = tiltLong ? 'long' : 'short';
   const p = priceSide(data, maValues, side);
   return {
@@ -188,9 +164,10 @@ function analyzeSymbol(symbol: string, data: OHLCV[]): ReportItem | null {
     t1: p.t1,
     t2: p.t2,
     riskReward: p.rr,
-    trigger: side === 'long' ? `4H 收盘站上 ${round2(ma20)} 再买` : `4H 收盘跌破 ${round2(ma20)} 再空`,
-    noTrade: '不满足条件不追',
-    blocked: null
+    trigger: dense
+      ? (side === 'long' ? `4H 收盘站上 ${round2(upperBand)} 再买` : `4H 收盘跌破 ${round2(lowerBand)} 再空`)
+      : '均线未密集，等待粘合',
+    noTrade: '不满足条件不追'
   };
 }
 

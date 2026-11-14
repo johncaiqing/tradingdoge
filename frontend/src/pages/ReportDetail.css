@@ -48,7 +48,6 @@
 .rating-long { color: var(--signal-bull); }
 .rating-short { color: var(--signal-bear); }
 .rating-watch { color: var(--accent-gold-light); }
-.rating-defend { color: #ff7043; }
 
 .rating-count {
   font-family: var(--font-mono);
@@ -157,15 +156,6 @@
   font-size: 0.8125rem;
   color: var(--text-muted);
   font-style: italic;
-}
-
-.item-blocked {
-  font-size: 0.8125rem;
-  color: #ff7043;
-  padding: 8px 12px;
-  background: rgba(255, 112, 67, 0.08);
-  border: 1px solid rgba(255, 112, 67, 0.2);
-  border-radius: 8px;
 }
 
 .empty {

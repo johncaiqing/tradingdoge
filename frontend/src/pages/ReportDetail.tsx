@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { fetchReport, Report, ReportItem, Rating } from '../api';
 import './ReportDetail.css';
 
-const RATING_ORDER: Rating[] = ['LONG', 'SHORT', 'WATCH', 'DEFEND'];
+const RATING_ORDER: Rating[] = ['LONG', 'SHORT', 'WATCH'];
 
 const fmt = (v: number | null) => (v == null ? '—' : v.toFixed(2));
 
@@ -72,19 +72,16 @@ function ItemCard({ item }: { item: ReportItem }) {
         {item.dense && <span className="item-dense">DENSE</span>}
       </div>
 
-      {item.rating !== 'DEFEND' && (
-        <div className="item-levels">
-          <Level label="Entry" value={item.entry} />
-          <Level label="Stop" value={item.stop} />
-          <Level label="T1" value={item.t1} />
-          <Level label="T2" value={item.t2} />
-          <Level label="RR" value={item.riskReward} />
-        </div>
-      )}
+      <div className="item-levels">
+        <Level label="Entry" value={item.entry} />
+        <Level label="Stop" value={item.stop} />
+        <Level label="T1" value={item.t1} />
+        <Level label="T2" value={item.t2} />
+        <Level label="RR" value={item.riskReward} />
+      </div>
 
       {item.trigger && <div className="item-trigger">{item.trigger}</div>}
       {item.noTrade && <div className="item-note">{item.noTrade}</div>}
-      {item.blocked && <div className="item-blocked">{item.blocked}</div>}
     </div>
   );
 }

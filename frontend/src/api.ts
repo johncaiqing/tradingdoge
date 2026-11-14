@@ -162,7 +162,7 @@ export async function fetchAgentComments(agentId: number, apiKey: string): Promi
 
 // ============ Report Types ============
 
-export type Rating = 'LONG' | 'SHORT' | 'WATCH' | 'DEFEND';
+export type Rating = 'LONG' | 'SHORT' | 'WATCH';
 
 export interface ReportItem {
   symbol: string;
@@ -177,7 +177,6 @@ export interface ReportItem {
   riskReward: number | null;
   trigger: string | null;
   noTrade: string | null;
-  blocked: string | null;
   ma20: number;
   ma60: number;
   ma120: number;
