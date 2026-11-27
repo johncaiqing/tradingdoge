@@ -27,42 +27,22 @@ export interface Stock {
   name: string;
 }
 
-export const INTERVALS = ['1h', '2h', '4h', '1day', '1week', '1month'] as const;
+export const INTERVALS = ['1h', '2h', '4h', '1day', '1week'] as const;
 export type Interval = typeof INTERVALS[number];
 
-export const SYMBOLS = ['SOXL', 'SNDK', 'MU', 'INTC', 'SKHY', 'MSTR', 'NVDA', 'SPY', 'GOOG', 'AAPL', 'TSLA', 'SPCX', 'MRVL', 'COIN', 'NBIS', 'RKLB', 'QQQ', 'EWY', 'BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'NEAR', 'SUI', 'ARB', 'ENA', 'ZEC', 'HYPE'] as const;
+export const SYMBOLS = ['NVDA', 'TSLA', 'SPCX', 'MSTR', 'BTC', 'GLD', 'SPY'] as const;
 export type Symbol = typeof SYMBOLS[number];
 
-export const CRYPTO_SYMBOLS: ReadonlySet<string> = new Set(['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'NEAR', 'SUI', 'ARB', 'ENA', 'ZEC', 'HYPE']);
+export const CRYPTO_SYMBOLS: ReadonlySet<string> = new Set(['BTC']);
 
 export const SYMBOL_NAMES: Record<string, string> = {
-  'SPY': 'S&P 500 ETF',
-  'QQQ': 'Nasdaq 100 ETF',
-  'SOXL': 'Direxion 3X Semi Bull',
-  'SNDK': 'Sandisk',
-  'MU': 'Micron Technology',
-  'INTC': 'Intel',
-  'MSTR': 'MicroStrategy',
   'NVDA': 'NVIDIA',
-  'GOOG': 'Alphabet',
-  'AAPL': 'Apple',
   'TSLA': 'Tesla',
-  'MRVL': 'Marvell Technology',
-  'COIN': 'Coinbase',
-  'NBIS': 'Nebius Group',
-  'RKLB': 'Rocket Lab',
-  'EWY': 'iShares MSCI Korea',
+  'SPCX': 'SpaceX',
+  'MSTR': 'MicroStrategy',
   'BTC': 'Bitcoin',
-  'ETH': 'Ethereum',
-  'SOL': 'Solana',
-  'XRP': 'XRP',
-  'DOGE': 'Dogecoin',
-  'NEAR': 'NEAR Protocol',
-  'SUI': 'Sui',
-  'ARB': 'Arbitrum',
-  'ENA': 'Ethena',
-  'ZEC': 'Zcash',
-  'HYPE': 'Hyperliquid'
+  'GLD': 'SPDR Gold ETF',
+  'SPY': 'S&P 500 ETF'
 };
 
 // ============ Agent & Comment Types ============

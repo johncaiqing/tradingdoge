@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { SYMBOLS, SYMBOL_NAMES, CRYPTO_SYMBOLS, Interval } from './types';
+import { SYMBOLS, SYMBOL_NAMES, CRYPTO_SYMBOLS, INTERVALS, Interval } from './types';
 import { getStockData, getSignals, initDatabase, clearAllSignals, registerAgent, getAgentByApiKey, getAgentById, getAgentList, updateAgentNotifyConfig, insertComment, getCommentsBySymbol, getCommentsByAgent, toggleCommentLike, getCommentLikeCount, getCommentLikeStatus, getLatestSignals, getLatestDatetime, getReports, getReportById, insertReport } from './database';
 import { getCandlesWithMA, CandleWithMA } from './signals';
 import { manualFetch, validateAndFetchIncomplete } from './scheduler';
@@ -31,7 +31,7 @@ router.get('/stock/:symbol', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Invalid symbol' });
   }
 
-  if (interval !== '4h') {
+  if (!INTERVALS.includes(interval as Interval)) {
     return res.status(400).json({ error: 'Invalid interval' });
   }
 
@@ -50,7 +50,7 @@ router.get('/signals-daily/:symbol', async (req: Request, res: Response) => {
   }
 
   const signals = await getSignals(symbol, days);
-  const intervals = ['1h', '2h', '4h', '1day'];
+  const intervals = ['1h', '2h', '4h', '1day', '1week'];
 
   // Build date to signal mapping
   const signalMap: Record<string, Record<string, 'B' | 'S' | '-'>> = {};
@@ -61,7 +61,7 @@ router.get('/signals-daily/:symbol', async (req: Request, res: Response) => {
     const dateStr = sig.datetime.split(' ')[0].split('T')[0];
     if (intervals.includes(sig.interval)) {
       if (!signalMap[dateStr]) {
-        signalMap[dateStr] = { '1h': '-', '2h': '-', '4h': '-', '1day': '-' };
+        signalMap[dateStr] = { '1h': '-', '2h': '-', '4h': '-', '1day': '-', '1week': '-' };
       }
       if (signalMap[dateStr][sig.interval] === '-') {
         signalMap[dateStr][sig.interval] = sig.signal_type as 'B' | 'S';
@@ -149,7 +149,7 @@ router.get('/signal-status/:symbol', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Invalid symbol' });
   }
 
-  const intervals = ['4h'];
+  const intervals = [...INTERVALS];
   const signals: Record<string, { signal_type: string; datetime: string } | null> = {};
 
   for (const interval of intervals) {
@@ -161,10 +161,10 @@ router.get('/signal-status/:symbol', async (req: Request, res: Response) => {
   }
 
   const signalValues = Object.values(signals).filter(s => s !== null);
-  const allB = signalValues.length === 1 && signalValues.every(s => s!.signal_type === 'B');
+  const allB = signalValues.length === intervals.length && signalValues.every(s => s!.signal_type === 'B');
   const status = allB ? 'BUY' : 'SELL';
 
-  const dailyData = await getStockData(symbol, '4h', 60);
+  const dailyData = await getStockData(symbol, '1day', 60);
   const price = dailyData.length > 0 ? dailyData[dailyData.length - 1].close : 0;
 
   if (status === 'BUY') {
@@ -225,7 +225,8 @@ router.post('/validate', async (_req: Request, res: Response) => {
 // Get latest datetime for a symbol
 router.get('/latest/:symbol', async (req: Request, res: Response) => {
   const symbol = decodeURIComponent(req.params.symbol);
-  const latestDatetime = await getLatestDatetime(symbol, '4h');
+  const interval = (req.query.interval as string) || '4h';
+  const latestDatetime = await getLatestDatetime(symbol, interval);
   res.json({ symbol, latest_datetime: latestDatetime });
 });
 

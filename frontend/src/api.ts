@@ -28,7 +28,7 @@ export interface Signal {
   price: number;
 }
 
-export const INTERVALS = ['4h'] as const;
+export const INTERVALS = ['1h', '2h', '4h', '1day', '1week'] as const;
 export type Interval = typeof INTERVALS[number];
 
 // Use environment variable for API base, default to /api for local development
@@ -166,6 +166,7 @@ export type Rating = 'LONG' | 'SHORT' | 'WATCH';
 
 export interface ReportItem {
   symbol: string;
+  interval: string;
   price: number;
   changePct: number;
   rating: Rating;

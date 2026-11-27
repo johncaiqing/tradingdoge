@@ -1,4 +1,4 @@
-import { SYMBOLS, OHLCV } from './types';
+import { SYMBOLS, INTERVALS, OHLCV } from './types';
 import { getStockData } from './database';
 import { calculateSMA, calculateEMA } from './signals';
 
@@ -6,6 +6,7 @@ export type Rating = 'LONG' | 'SHORT' | 'WATCH';
 
 export interface ReportItem {
   symbol: string;
+  interval: string;
   price: number;
   changePct: number;
   rating: Rating;
@@ -34,6 +35,14 @@ export interface Report {
 const roundUp05 = (x: number) => Math.ceil(x * 2) / 2;
 const roundDown05 = (x: number) => Math.floor(x * 2) / 2;
 const round2 = (x: number) => Math.round(x * 100) / 100;
+
+const INTERVAL_LABELS: Record<string, string> = {
+  '1h': '1H',
+  '2h': '2H',
+  '4h': '4H',
+  '1day': '日线',
+  '1week': '周线'
+};
 
 function findSwingPoints(data: OHLCV[], lookback = 2): { lows: number[]; highs: number[] } {
   const lows: number[] = [];
@@ -101,7 +110,7 @@ function priceSide(data: OHLCV[], maValues: number[], side: 'long' | 'short') {
   }
 }
 
-function analyzeSymbol(symbol: string, data: OHLCV[]): ReportItem | null {
+function analyzeSymbol(symbol: string, interval: string, data: OHLCV[]): ReportItem | null {
   if (data.length < 130) return null;
 
   const ma20Arr = calculateSMA(data, 20);
@@ -126,8 +135,9 @@ function analyzeSymbol(symbol: string, data: OHLCV[]): ReportItem | null {
   const upperBand = Math.max(...maValues);
   const lowerBand = Math.min(...maValues);
   const dense = (upperBand - lowerBand) / close <= 0.02;
+  const label = INTERVAL_LABELS[interval] || interval;
 
-  const base = { symbol, price: round2(close), changePct, dense, ma20, ma60, ma120, ema20, ema60, ema120 };
+  const base = { symbol, interval, price: round2(close), changePct, dense, ma20, ma60, ma120, ema20, ema60, ema120 };
 
   let rating: Rating;
   if (dense && close > upperBand) rating = 'LONG';
@@ -145,7 +155,7 @@ function analyzeSymbol(symbol: string, data: OHLCV[]): ReportItem | null {
       t1: p.t1,
       t2: p.t2,
       riskReward: p.rr,
-      trigger: side === 'long' ? `4H 收盘站上 ${round2(upperBand)}` : `4H 收盘跌破 ${round2(lowerBand)}`,
+      trigger: side === 'long' ? `${label} 收盘站上 ${round2(upperBand)}` : `${label} 收盘跌破 ${round2(lowerBand)}`,
       noTrade: side === 'long'
         ? `跌破 ${p.stop.toFixed(2)} 取消计划`
         : `收复 ${p.stop.toFixed(2)} 取消计划`
@@ -165,7 +175,7 @@ function analyzeSymbol(symbol: string, data: OHLCV[]): ReportItem | null {
     t2: p.t2,
     riskReward: p.rr,
     trigger: dense
-      ? (side === 'long' ? `4H 收盘站上 ${round2(upperBand)} 再买` : `4H 收盘跌破 ${round2(lowerBand)} 再空`)
+      ? (side === 'long' ? `${label} 收盘站上 ${round2(upperBand)} 再买` : `${label} 收盘跌破 ${round2(lowerBand)} 再空`)
       : '均线未密集，等待粘合',
     noTrade: '不满足条件不追'
   };
@@ -175,13 +185,15 @@ export async function generateReport(): Promise<Report> {
   const items: ReportItem[] = [];
 
   for (const symbol of SYMBOLS) {
-    const data = await getStockData(symbol as string, '4h', 400);
-    if (data.length < 130) {
-      console.log(`[report] skip ${symbol}: only ${data.length} 4h records`);
-      continue;
+    for (const interval of INTERVALS) {
+      const data = await getStockData(symbol as string, interval, 400);
+      if (data.length < 130) {
+        console.log(`[report] skip ${symbol}/${interval}: only ${data.length} records`);
+        continue;
+      }
+      const item = analyzeSymbol(symbol as string, interval, data);
+      if (item) items.push(item);
     }
-    const item = analyzeSymbol(symbol as string, data);
-    if (item) items.push(item);
   }
 
   return { created_at: new Date().toISOString(), items };

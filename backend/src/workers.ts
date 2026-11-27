@@ -1,4 +1,4 @@
-import { SYMBOLS, SYMBOL_NAMES, CRYPTO_SYMBOLS, Interval } from './types';
+import { SYMBOLS, SYMBOL_NAMES, CRYPTO_SYMBOLS, INTERVALS, Interval } from './types';
 import { upsertStockData, getLatestDatetime, initDatabase } from './database';
 import { fetchTimeSeries } from './twelvedata';
 import { processStockData } from './signals';
@@ -61,14 +61,14 @@ export default {
         const days = 10;
         const { getSignals } = await import('./database');
         const signals = await getSignals(symbol, days);
-        const intervals = ['1h', '2h', '4h', '1day'];
+        const intervals = ['1h', '2h', '4h', '1day', '1week'];
 
         const signalMap: Record<string, Record<string, 'B' | 'S' | '-'>> = {};
         for (const sig of signals) {
           const dateStr = sig.datetime.split(' ')[0].split('T')[0];
           if (intervals.includes(sig.interval)) {
             if (!signalMap[dateStr]) {
-              signalMap[dateStr] = { '1h': '-', '2h': '-', '4h': '-', '1day': '-' };
+              signalMap[dateStr] = { '1h': '-', '2h': '-', '4h': '-', '1day': '-', '1week': '-' };
             }
             signalMap[dateStr][sig.interval] = sig.signal_type as 'B' | 'S';
           }
@@ -119,7 +119,7 @@ export default {
   // 本地手动触发（Vercel 负责定时抓取）
   async doManualFetch(symbolParam?: string | null, intervalParam?: string | null): Promise<void> {
     const symbolsToFetch = symbolParam ? [symbolParam] : SYMBOLS;
-    const intervalsToFetch = intervalParam ? [intervalParam] : ['4h'];
+    const intervalsToFetch = intervalParam ? [intervalParam] : [...INTERVALS];
 
     // For scheduled fetch, use incremental update (get latest datetime from DB)
     // For manual fetch with specific symbol, fetch more data to ensure we have latest

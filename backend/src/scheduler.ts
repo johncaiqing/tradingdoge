@@ -1,4 +1,4 @@
-import { SYMBOLS, Interval } from './types';
+import { SYMBOLS, INTERVALS, Interval } from './types';
 import { upsertStockData, getLatestDatetime, getStockData, insertReport } from './database';
 import { fetchTimeSeries } from './twelvedata';
 import { processStockData } from './signals';
@@ -9,7 +9,7 @@ export async function validateAndFetchIncomplete() {
   const results: { symbol: string; interval: string; status: string }[] = [];
 
   for (const symbol of SYMBOLS) {
-    for (const interval of ['4h']) {
+    for (const interval of INTERVALS) {
       // 获取今天的日期（纽约时间）
       const now = new Date();
       const nyTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -51,13 +51,15 @@ export async function generateAndStoreReport(): Promise<number> {
   console.log('Generating report...');
 
   for (const symbol of SYMBOLS) {
-    const latest = await getLatestDatetime(symbol as string, '4h');
-    const data = await fetchTimeSeries(symbol as any, '4h', 400, latest || undefined);
-    if (data.length > 0) {
-      await upsertStockData(symbol as any, '4h', data);
+    for (const interval of INTERVALS) {
+      const latest = await getLatestDatetime(symbol as string, interval);
+      const data = await fetchTimeSeries(symbol as any, interval as Interval, 400, latest || undefined);
+      if (data.length > 0) {
+        await upsertStockData(symbol as any, interval as Interval, data);
+      }
+      await processStockData(symbol as any, interval);
+      await new Promise(resolve => setTimeout(resolve, 8000));
     }
-    await processStockData(symbol as any, '4h');
-    await new Promise(resolve => setTimeout(resolve, 8000));
   }
 
   const report = await generateReport();
@@ -71,7 +73,7 @@ export async function manualFetch() {
   console.log('Manual fetch triggered...');
 
   for (const symbol of SYMBOLS) {
-    for (const interval of ['4h']) {
+    for (const interval of INTERVALS) {
       // 获取当前数据库中该 symbol+interval 的最新时间戳
       const latestDatetime = await getLatestDatetime(symbol as string, interval as string);
 

@@ -159,7 +159,7 @@ export async function getCandlesWithMA(symbol: string, interval: string, limit?:
 
 // 检查并发送全 B/全 S 信号通知
 export async function checkAndNotifyAllBSignal(symbol: string): Promise<void> {
-  const intervals = ['1h', '2h', '4h', '1day'];
+  const intervals = ['1h', '2h', '4h', '1day', '1week'];
   const latestSignals: { [key: string]: string | null } = {};
 
   // 获取每个时间周期的最新信号
@@ -171,8 +171,8 @@ export async function checkAndNotifyAllBSignal(symbol: string): Promise<void> {
 
   // 检查是否全 B 或全 S
   const signalValues = Object.values(latestSignals).filter(s => s !== null) as string[];
-  if (signalValues.length < 4) {
-    return; // 信号不足4个，不发送通知
+  if (signalValues.length < intervals.length) {
+    return; // 信号不足，不发送通知
   }
 
   const allB = signalValues.every(s => s === 'B');

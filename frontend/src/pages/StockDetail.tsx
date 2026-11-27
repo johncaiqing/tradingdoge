@@ -4,6 +4,14 @@ import { fetchStockData, fetchSignalStatus, OHLCV, Interval, INTERVALS, SignalSt
 import StockChart from '../components/Chart';
 import './StockDetail.css';
 
+const INTERVAL_LABELS: Record<Interval, string> = {
+  '1h': '1H',
+  '2h': '2H',
+  '4h': '4H',
+  '1day': '日',
+  '1week': '周'
+};
+
 export const StockDetail: React.FC = () => {
   const { symbol } = useParams<{ symbol: string }>();
   const [interval, setInterval] = useState<Interval>('4h');
@@ -57,7 +65,7 @@ export const StockDetail: React.FC = () => {
               className={`interval-btn ${interval === int ? 'active' : ''}`}
               onClick={() => setInterval(int)}
             >
-              {int}
+              {INTERVAL_LABELS[int]}
             </button>
           ))}
         </div>
@@ -114,9 +122,9 @@ export const StockDetail: React.FC = () => {
                 </div>
               )}
               <div className="signal-badge-details">
-                {['4h'].map(tf => (
+                {INTERVALS.map(tf => (
                   <span key={tf} className={`signal-dot ${signalStatus.signals[tf]?.signal_type === 'B' ? 'dot-b' : 'dot-s'}`}>
-                    {tf} {signalStatus.signals[tf]?.signal_type || '-'}
+                    {INTERVAL_LABELS[tf]} {signalStatus.signals[tf]?.signal_type || '-'}
                   </span>
                 ))}
               </div>

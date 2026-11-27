@@ -445,7 +445,7 @@ export async function getLatestSignals(): Promise<Record<string, Record<string, 
   await initDatabase();
   if (!dbWrapper) return {};
 
-  const intervals = ['1h', '2h', '4h', '1day'];
+  const intervals = ['1h', '2h', '4h', '1day', '1week'];
   const result: Record<string, Record<string, { signal_type: string; datetime: string }>> = {};
 
   for (const symbol of SYMBOLS) {

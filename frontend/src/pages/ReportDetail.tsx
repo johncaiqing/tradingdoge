@@ -51,7 +51,7 @@ export default function ReportDetail() {
             {g.rating} <span className="rating-count">{g.items.length}</span>
           </h2>
           <div className="item-grid">
-            {g.items.map(item => <ItemCard key={item.symbol} item={item} />)}
+            {g.items.map(item => <ItemCard key={`${item.symbol}-${item.interval}`} item={item} />)}
           </div>
         </section>
       ))}
@@ -65,6 +65,7 @@ function ItemCard({ item }: { item: ReportItem }) {
     <div className="item-card">
       <div className="item-header">
         <span className="item-symbol">{item.symbol}</span>
+        <span className="item-interval">{item.interval}</span>
         <span className="item-price">{item.price.toFixed(2)}</span>
         <span className={up ? 'item-change up' : 'item-change down'}>
           {up ? '+' : ''}{item.changePct.toFixed(2)}%
